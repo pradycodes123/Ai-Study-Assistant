@@ -1,5 +1,5 @@
 import os
-import PyPDF2
+from pypdf import PdfReader
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     if not os.path.isfile(pdf_path):
@@ -8,12 +8,12 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     if not pdf_path.lower().endswith(".pdf"):
         raise ValueError("Not a PDF file")
 
-    text = ""
+    pages = []
     with open(pdf_path, "rb") as f:
-        reader = PyPDF2.PdfReader(f)
+        reader = PdfReader(f)
         for page in reader.pages:
             page_text = page.extract_text()
             if page_text:
-                text += page_text
+                pages.append(page_text)
 
-    return text
+    return "\n".join(pages)

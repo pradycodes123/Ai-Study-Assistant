@@ -1,6 +1,8 @@
 import re
+from typing import List
+from urllib.parse import quote_plus
 
-def chunk_text(text, target_size=4000):
+def chunk_text(text: str, target_size: int = 4000) -> List[str]:
     """
     Splits text into chunks of approximately target_size characters,
     respecting word boundaries to avoid cutting words in half.
@@ -25,12 +27,6 @@ def chunk_text(text, target_size=4000):
         
     return chunks
 
-def format_markdown(result: str) -> str:
-    """
-    Clean up or format the LLM output if necessary.
-    Since we optimized the prompt to return valid Markdown, we just return it mostly as-is.
-    """
-    return result.strip()
 
 def youtube_links(result: str) -> str:
     """
@@ -41,6 +37,8 @@ def youtube_links(result: str) -> str:
     formatted = []
     in_youtube_section = False
 
+    item_pattern = re.compile(r"^(\d+)\.\s+(.+)$")
+
     for line in lines:
         stripped = line.strip()
         
@@ -50,24 +48,22 @@ def youtube_links(result: str) -> str:
             formatted.append(line)
             continue
         
-        if in_youtube_section and stripped and stripped[0].isdigit() and "." in stripped:
-            # It's likely a list item: "1. Python Tutorial"
-            parts = stripped.split(".", 1)
-            if len(parts) == 2:
-                number = parts[0]
-                title = parts[1].strip()
+        if in_youtube_section:
+            match = item_pattern.match(stripped)
+            if match:
+                number = match.group(1)
+                title = match.group(2).strip()
                 # Create a search link
-                query = title.replace(" ", "+")
+                query = quote_plus(title)
                 link = f"{number}. [{title}](https://www.youtube.com/results?search_query={query})"
                 formatted.append(link)
-            else:
-                formatted.append(line)
-        else:
-            # If we hit an empty line or another header, we might be out of the section,
-            # but usually YOUTUBE is the last section. 
-            # If we encounter a new header (starts with #), stop processing as youtube links
+                continue
+            
             if stripped.startswith("#"):
                 in_youtube_section = False
-            formatted.append(line)
+                formatted.append(line)
+                continue
+                
+        formatted.append(line)
 
     return "\n".join(formatted)

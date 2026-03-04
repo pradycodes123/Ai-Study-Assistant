@@ -1,5 +1,5 @@
 .venv/
 __pycache__/
 .vscode/
-analysis_result.md
-analysis_result.txt
+*_study_notes.md
+.env
